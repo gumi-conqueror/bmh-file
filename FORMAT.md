@@ -26,7 +26,7 @@ All numeric fields below are little-endian 32-bit integers.
 Empty event lists produce no event chunks. A sequence still contains `qntz`.
 The controller tag is **`ccgh`**, including the original spelling.
 The writer groups controller events by ascending controller number and preserves order within each group.
-Each ZZ digit ranges from 0 through 35. The combined value is `high × 36 + low`.
+Each ZZ digit is one base-36 digit, from 0 through 35. The combined value is `high × 36 + low`, from 0 through 1295.
 The format does not store the session's ZZ/FF mode.
 
 The Japanese original writes ANSI name bytes. Its saved Japanese fixture confirms CP932.

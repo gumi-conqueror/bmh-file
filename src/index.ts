@@ -27,6 +27,10 @@ import type { MidiControlEvent, MidiNoteEvent, MidiParamEvent, MidiSequence } fr
 import type { BmhDefinition, Division, DivNote } from './types.js';
 import { CP932_BEST_FIT } from './cp932-best-fit.js';
 
+/** A `dfnt` ZZ number is two base-36 digits: `high × 36 + low`, 0 through ZZ (1295). */
+const ZZ_BASE = 36;
+const ZZ_COUNT = ZZ_BASE * ZZ_BASE;
+
 export interface BmhProject {
   source: MidiSequence;
   divisions: Division[];
@@ -264,8 +268,10 @@ function serializeDivisionChunk(
     chunk('s2df', i32Payload(division.src2def)),
   ];
   for (const definition of division.definitions) {
-    const zz = ((definition.zz % 1296) + 1296) % 1296;
-    children.push(chunk('dfnt', i32Payload([zz % 36, Math.floor(zz / 36), definition.div])));
+    const zz = ((definition.zz % ZZ_COUNT) + ZZ_COUNT) % ZZ_COUNT;
+    children.push(
+      chunk('dfnt', i32Payload([zz % ZZ_BASE, Math.floor(zz / ZZ_BASE), definition.div])),
+    );
   }
   return containerChunk('Div ', children);
 }
@@ -282,9 +288,9 @@ function parseDivisionChunk(chunk: Chunk, sourceNoteCount: number): Division {
     const low = dfntReader.u32();
     const high = dfntReader.u32();
     const div = dfntReader.i32();
-    if (low >= 36 || high >= 36 || div < 0 || div >= recording.notes.length)
+    if (low >= ZZ_BASE || high >= ZZ_BASE || div < 0 || div >= recording.notes.length)
       throw new BmhFormatError('invalid BMH definition');
-    definitions.push({ zz: high * 36 + low, div });
+    definitions.push({ zz: high * ZZ_BASE + low, div });
   }
 
   // Rebuild the div notes: the recording sequence IS the div-note list in
