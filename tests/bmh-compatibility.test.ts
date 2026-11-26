@@ -79,21 +79,24 @@ test('rejects malformed known chunks and invalid definition references', () => {
   assert.throws(() => readBmh(changed(230, 2)), /invalid BMH definition/);
 });
 
-test('handles best-fit mappings, NUL termination and out-of-range integers', () => {
-  const project = readBmh(original);
-  for (const [name, exported] of [
-    ['🎵', '??'],
-    ['bad\0name', 'bad'],
-    ['\ud800', '?'],
-    ['¥', '\\'],
-    ['〜', '?'],
-    ['ÀÉßゔ', 'AEsヴ'],
-  ]) {
+for (const [name, exported] of [
+  ['🎵', '??'],
+  ['bad\0name', 'bad'],
+  ['\ud800', '?'],
+  ['¥', '\\'],
+  ['〜', '?'],
+  ['ÀÉßゔ', 'AEsヴ'],
+  ['ｺｰﾄﾞ①髙', 'ｺｰﾄﾞ①髙'],
+]) {
+  test(`exports the division name ${JSON.stringify(name)} as ${JSON.stringify(exported)}`, () => {
+    const project = readBmh(original);
     project.divisions[0].name = name;
     assert.equal(readBmh(writeBmh(project)).divisions[0].name, exported);
-  }
-  project.divisions[0].name = 'ｺｰﾄﾞ①髙';
-  assert.equal(readBmh(writeBmh(project)).divisions[0].name, 'ｺｰﾄﾞ①髙');
+  });
+}
+
+test('rejects note positions outside the signed 32-bit range', () => {
+  const project = readBmh(original);
   project.source.notes[0].position = 0x80000000;
   assert.throws(() => writeBmh(project), /32-bit integer/);
 });
